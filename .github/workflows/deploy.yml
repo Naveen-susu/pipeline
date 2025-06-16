@@ -7,7 +7,7 @@ on:
 
 
 evn:
-  HEALTHCHECK_URL: http://13.200.242.191:5000
+  HEALTHCHECK_URL: http://13.204.81.72:5000
 
 jobs:
   Build-test-deploy:
