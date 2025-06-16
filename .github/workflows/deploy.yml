@@ -1,0 +1,56 @@
+name: Deploy Flask App
+
+on:
+  push:
+    branches:
+      -main
+
+
+evn:
+  HEALTHCHECK_URL: http://13.200.242.191:5000
+
+jobs:
+  Build-test-deploy:
+    runs-on: self-hosted
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+
+      - name: Virtual env
+        run:
+          sudo apt install python3.12-venv -y
+          python3 -m venv venv
+          source venv/bin.activate
+
+      - name: Install Depenencies
+        run:
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run unit Tests
+        run:
+          python3 -m unittest test_app.py
+
+      - name: Deploy Flask Application
+        run:
+          nohup python3 app.py & 
+
+health:
+  needs: Buld-test-deploy 
+  runs-on: self-hosted
+
+
+  steps:
+    - name: Health check
+      runs:
+        for i in {1..10}; do
+          curl -s -o /dev/null -w "%{http_code}" $HEALTHCHECK_URL | grep "200" && echo "Health check passed" && exit 0 || echo "Waiting for service..";
+          sleep 5;
+        done;
+        echo "Health check failed****" && exit 1 
